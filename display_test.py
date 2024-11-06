@@ -1,6 +1,8 @@
 #!/usr/bin/python3
 
 from signal import signal, SIGTERM, SIGHUP, pause
+import sys
+sys.path.insert(0, '/home/bogdan/my-venv/lib/python3.11/site-packages')
 from rpi_lcd import LCD
 
 lcd = LCD()
