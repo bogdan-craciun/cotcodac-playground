@@ -6,13 +6,15 @@ from time import sleep
 
 app = Flask(__name__)
 
+
 @app.route("/")
 def hello_world():
     return '<p>Hello, World!</p><a href="/blink">Blink</a>'
 
-@app.route('/<path:req_path>')
+
+@app.route("/<path:req_path>")
 def dir_listing(req_path):
-    BASE_DIR = '/Users/bogdan'
+    BASE_DIR = "/Users/bogdan"
 
     # Joining the base and the requested path
     abs_path = os.path.join(BASE_DIR, req_path)
@@ -27,19 +29,20 @@ def dir_listing(req_path):
 
     # Show directory contents
     files = os.listdir(abs_path)
-    return render_template('./files.html', files=files)
+    return render_template("./files.html", files=files)
 
-@app.route('/blink')
+
+@app.route("/blink")
 def blink():
-  try:
-    GPIO.setwarnings(False)
-    GPIO.setmode(GPIO.BOARD)
-    GPIO.setup(40,GPIO.OUT)
-    GPIO.output(40, 0)
-    sleep(3)
-    GPIO.output(40, 1)
-    GPIO.cleanup()
-  except:
-    pass
-  finally:
-    GPIO.cleanup()
+    try:
+        GPIO.setwarnings(False)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(40, GPIO.OUT)
+        GPIO.output(40, 0)
+        sleep(3)
+        GPIO.output(40, 1)
+        GPIO.cleanup()
+    except:
+        pass
+    finally:
+        GPIO.cleanup()
