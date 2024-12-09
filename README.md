@@ -16,6 +16,6 @@ Mac:
 ```
 python3 -m venv .venv
 . .venv/bin/activate
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 flask --app hello run --host=0.0.0.0 --port 5555
 ```

@@ -1,11 +1,14 @@
 import os
 from flask import Flask, send_file, render_template, abort
+import RPi.GPIO as GPIO
+from signal import signal, SIGTERM, SIGHUP, pause
+from time import sleep
 
 app = Flask(__name__)
 
 @app.route("/")
 def hello_world():
-    return "<p>Hello, World!</p>"
+    return '<p>Hello, World!</p><a href="/blink">Blink</a>'
 
 @app.route('/<path:req_path>')
 def dir_listing(req_path):
@@ -25,3 +28,18 @@ def dir_listing(req_path):
     # Show directory contents
     files = os.listdir(abs_path)
     return render_template('./files.html', files=files)
+
+@app.route('/blink')
+def blink():
+  try:
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(40,GPIO.OUT)
+    GPIO.output(40, 0)
+    sleep(3)
+    GPIO.output(40, 1)
+    GPIO.cleanup()
+  except:
+    pass
+  finally:
+    GPIO.cleanup()
