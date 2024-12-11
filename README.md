@@ -13,6 +13,8 @@ cd my-venv
 
 Mac:
 
+clone it, then inside it run:
+
 ```
 python3 -m venv .venv
 . .venv/bin/activate
