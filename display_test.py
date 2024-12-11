@@ -32,8 +32,8 @@ data = json.loads(json_data)
 print(data["line1"])
 print(data["line2"])
 
-# line1 = sys.argv[1][:16]
-# line2 = sys.argv[2][:16]
+line1 = data["line1"][:16]
+line2 = data["line2"][:16]
 
 try:
     lcd.text(line1, 1)
