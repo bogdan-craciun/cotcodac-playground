@@ -1,15 +1,23 @@
 from flask import Flask, request, jsonify
 import subprocess
 import json
+from signal import signal, SIGTERM, SIGHUP
 
 app = Flask(__name__)
 
 
 @app.route("/display-message", methods=["POST"])
 def display_message():
-    data = request.get_json()
-    if "line1" not in data or "line2" not in data:
+    try:
+        data = request.get_json()
+    except:
         return jsonify({"error": "Invalid input"}), 400
+
+    if "line1" not in data and "line2" not in data:
+        return (
+            jsonify({"error": "Invalid input. line1 or line2 not found in input."}),
+            400,
+        )
 
     # Call the external Python script with the JSON data
     script_path = "./display_test.py"

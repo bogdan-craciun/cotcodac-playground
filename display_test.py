@@ -15,6 +15,7 @@ lcd = LCD()
 
 
 def safe_exit(signum, frame):
+    lcd.clear()
     exit(1)
 
 
@@ -28,19 +29,23 @@ if len(sys.argv) != 2:
 
 json_data = sys.argv[1]
 data = json.loads(json_data)
+line1 = ""
+line2 = ""
 
-print(data["line1"])
-print(data["line2"])
-
-line1 = data["line1"][:16]
-line2 = data["line2"][:16]
+if "line1" in data:
+    line1 = data["line1"][:16]
+if "line2" in data:
+    line2 = data["line2"][:16]
 
 try:
     lcd.text(line1, 1)
     lcd.text(line2, 2)
-    sleep(3)
+    # sleep(3)
     # pause()
+except Exception as e:
+    print(e)
+    safe_exit()
 except KeyboardInterrupt:
     pass
-finally:
-    lcd.clear()
+# finally:
+# lcd.clear()

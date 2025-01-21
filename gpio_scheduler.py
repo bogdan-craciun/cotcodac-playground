@@ -21,15 +21,24 @@ SCHEDULE_FILE = "pin_schedules.json"
 
 
 def load_schedules():
-    if os.path.exists(SCHEDULE_FILE):
-        with open(SCHEDULE_FILE, "r") as f:
-            return json.load(f)
-    return {}
+    """Load schedules from JSON file"""
+    try:
+        if os.path.exists(SCHEDULE_FILE):
+            with open(SCHEDULE_FILE, "r") as f:
+                return json.load(f)
+        return {}
+    except Exception as e:
+        print(f"Error loading schedules: {e}")
+        return {}
 
 
 def save_schedules(schedules):
-    with open(SCHEDULE_FILE, "w") as f:
-        json.dump(schedules, f, indent=2)
+    """Save schedules to JSON file"""
+    try:
+        with open(SCHEDULE_FILE, "w") as f:
+            json.dump(schedules, f, indent=2)
+    except Exception as e:
+        print(f"Error saving schedules: {e}")
 
 
 def setup_pin(pin):

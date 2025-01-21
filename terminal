@@ -1,0 +1,3 @@
+npm install shadcn-ui
+npx shadcn@latest init
+npx shadcn@latest add button card input label table toast
