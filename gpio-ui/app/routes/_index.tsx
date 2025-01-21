@@ -17,6 +17,7 @@ import { useToast } from "~/hooks/use-toast";
 import { Toaster } from "~/components/ui/toaster";
 
 interface Schedule {
+	label: string;
 	on_time: string;
 	off_time: string;
 }
@@ -38,15 +39,39 @@ export default function Index() {
 	const [schedules, setSchedules] = useState<Schedules>(initialSchedules);
 	const [newSchedule, setNewSchedule] = useState({
 		pin: "",
+		label: "",
 		on_time: "",
 		off_time: "",
 	});
+
+	useEffect(() => {
+		if (fetcher.state === "idle" && fetcher.data) {
+			if (!fetcher.data.error) {
+				fetch("/api/schedules")
+					.then(response => response.json())
+					.then(newSchedules => {
+						setSchedules(newSchedules);
+						toast({
+							title: "Success",
+							description: fetcher.data.message,
+						});
+					});
+			} else {
+				toast({
+					title: "Error",
+					description: fetcher.data.error,
+					variant: "destructive",
+				});
+			}
+		}
+	}, [fetcher.state, fetcher.data]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		const formData = new FormData();
 		formData.append("intent", "add");
 		formData.append("pin", newSchedule.pin);
+		formData.append("label", newSchedule.label);
 		formData.append("on_time", newSchedule.on_time);
 		formData.append("off_time", newSchedule.off_time);
 
@@ -55,26 +80,10 @@ export default function Index() {
 			action: "/api/schedules",
 		});
 
-		if (!fetcher.data?.error) {
-			toast({
-				title: "Success",
-				description: "Schedule added successfully",
-			});
-			setNewSchedule({ pin: "", on_time: "", off_time: "" });
-			// Refresh schedules
-			const response = await fetch("/api/schedules");
-			const newSchedules = await response.json();
-			setSchedules(newSchedules);
-		} else {
-			toast({
-				title: "Error",
-				description: fetcher.data.error,
-				variant: "destructive",
-			});
-		}
+		setNewSchedule({ pin: "", label: "", on_time: "", off_time: "" });
 	};
 
-	const handleDelete = async (pin: string) => {
+	const handleDelete = (pin: string) => {
 		const formData = new FormData();
 		formData.append("intent", "delete");
 		formData.append("pin", pin);
@@ -83,23 +92,6 @@ export default function Index() {
 			method: "post",
 			action: "/api/schedules",
 		});
-
-		if (!fetcher.data?.error) {
-			toast({
-				title: "Success",
-				description: "Schedule deleted successfully",
-			});
-			// Refresh schedules
-			const response = await fetch("/api/schedules");
-			const newSchedules = await response.json();
-			setSchedules(newSchedules);
-		} else {
-			toast({
-				title: "Error",
-				description: fetcher.data.error,
-				variant: "destructive",
-			});
-		}
 	};
 
 	const handleManualControl = async (pin: string, state: boolean) => {
@@ -138,7 +130,7 @@ export default function Index() {
 					</CardHeader>
 					<CardContent>
 						<form onSubmit={handleSubmit} className="space-y-4">
-							<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+							<div className="grid grid-cols-1 md:grid-cols-4 gap-4">
 								<div className="space-y-2">
 									<Label htmlFor="pin">GPIO Pin</Label>
 									<Input
@@ -146,6 +138,17 @@ export default function Index() {
 										type="number"
 										value={newSchedule.pin}
 										onChange={e => setNewSchedule(prev => ({ ...prev, pin: e.target.value }))}
+										required
+									/>
+								</div>
+								<div className="space-y-2">
+									<Label htmlFor="label">Label</Label>
+									<Input
+										id="label"
+										type="text"
+										placeholder="e.g. Living Room Light"
+										value={newSchedule.label}
+										onChange={e => setNewSchedule(prev => ({ ...prev, label: e.target.value }))}
 										required
 									/>
 								</div>
@@ -184,6 +187,7 @@ export default function Index() {
 							<TableHeader>
 								<TableRow>
 									<TableHead>Pin</TableHead>
+									<TableHead>Label</TableHead>
 									<TableHead>On Time</TableHead>
 									<TableHead>Off Time</TableHead>
 									<TableHead>Actions</TableHead>
@@ -193,6 +197,7 @@ export default function Index() {
 								{Object.entries(schedules).map(([pin, schedule]) => (
 									<TableRow key={pin}>
 										<TableCell>{pin}</TableCell>
+										<TableCell>{schedule.label}</TableCell>
 										<TableCell>{schedule.on_time}</TableCell>
 										<TableCell>{schedule.off_time}</TableCell>
 										<TableCell>

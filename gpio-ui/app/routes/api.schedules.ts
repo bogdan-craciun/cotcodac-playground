@@ -39,15 +39,16 @@ export async function action({ request }: { request: Request }) {
 	switch (intent) {
 		case "add": {
 			const pin = formData.get("pin") as string;
+			const label = formData.get("label") as string;
 			const on_time = formData.get("on_time") as string;
 			const off_time = formData.get("off_time") as string;
 
-			if (!pin || !on_time || !off_time) {
+			if (!pin || !label || !on_time || !off_time) {
 				return json({ error: "Missing required fields" }, { status: 400 });
 			}
 
 			const schedules = loadSchedules();
-			schedules[pin] = { on_time, off_time };
+			schedules[pin] = { label, on_time, off_time };
 
 			if (saveSchedules(schedules)) {
 				return json({ message: "Schedule added successfully" });

@@ -1,14 +1,22 @@
 {
   "32": {
-    "on_time": "20:41",
-    "off_time": "20:43"
+    "label": "Green",
+    "on_time": "21:21",
+    "off_time": "22:00"
   },
   "36": {
-    "on_time": "20:41",
-    "off_time": "20:43"
+    "label": "Yellow",
+    "on_time": "23:45",
+    "off_time": "01:01"
   },
   "38": {
-    "on_time": "20:42",
-    "off_time": "20:44"
+    "label": "Red",
+    "on_time": "23:23",
+    "off_time": "15:55"
+  },
+  "40": {
+    "label": "Blue",
+    "on_time": "08:45",
+    "off_time": "07:45"
   }
 }
