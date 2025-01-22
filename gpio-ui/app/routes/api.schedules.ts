@@ -1,25 +1,42 @@
 import { json } from "@remix-run/node";
 import * as fs from "fs";
 import * as path from "path";
+import crypto from "crypto";
 
 const SCHEDULE_FILE = path.join(process.cwd(), "..", "pin_schedules.json");
 
-function loadSchedules() {
+interface Schedule {
+	id: string;
+	pin: string;
+	label: string;
+	on_time: string;
+	off_time: string;
+}
+
+interface ScheduleFile {
+	schedules: Schedule[];
+}
+
+function generateId(): string {
+	return crypto.randomBytes(16).toString("hex");
+}
+
+function loadSchedules(): ScheduleFile {
 	try {
 		if (fs.existsSync(SCHEDULE_FILE)) {
 			const data = fs.readFileSync(SCHEDULE_FILE, "utf8");
 			return JSON.parse(data);
 		}
-		return {};
+		return { schedules: [] };
 	} catch (error) {
 		console.error("Error loading schedules:", error);
-		return {};
+		return { schedules: [] };
 	}
 }
 
-function saveSchedules(schedules: any) {
+function saveSchedules(scheduleFile: ScheduleFile): boolean {
 	try {
-		fs.writeFileSync(SCHEDULE_FILE, JSON.stringify(schedules, null, 2));
+		fs.writeFileSync(SCHEDULE_FILE, JSON.stringify(scheduleFile, null, 2));
 		return true;
 	} catch (error) {
 		console.error("Error saving schedules:", error);
@@ -28,8 +45,8 @@ function saveSchedules(schedules: any) {
 }
 
 export async function loader() {
-	const schedules = loadSchedules();
-	return json(schedules);
+	const scheduleFile = loadSchedules();
+	return json(scheduleFile);
 }
 
 export async function action({ request }: { request: Request }) {
@@ -47,25 +64,35 @@ export async function action({ request }: { request: Request }) {
 				return json({ error: "Missing required fields" }, { status: 400 });
 			}
 
-			const schedules = loadSchedules();
-			schedules[pin] = { label, on_time, off_time };
+			const scheduleFile = loadSchedules();
+			const newSchedule: Schedule = {
+				id: generateId(),
+				pin,
+				label,
+				on_time,
+				off_time,
+			};
 
-			if (saveSchedules(schedules)) {
+			scheduleFile.schedules.push(newSchedule);
+
+			if (saveSchedules(scheduleFile)) {
 				return json({ message: "Schedule added successfully" });
 			}
 			return json({ error: "Failed to save schedule" }, { status: 500 });
 		}
 
 		case "delete": {
-			const pin = formData.get("pin") as string;
-			if (!pin) {
-				return json({ error: "Pin is required" }, { status: 400 });
+			const id = formData.get("id") as string;
+			if (!id) {
+				return json({ error: "Schedule ID is required" }, { status: 400 });
 			}
 
-			const schedules = loadSchedules();
-			if (pin in schedules) {
-				delete schedules[pin];
-				if (saveSchedules(schedules)) {
+			const scheduleFile = loadSchedules();
+			const scheduleIndex = scheduleFile.schedules.findIndex(s => s.id === id);
+
+			if (scheduleIndex !== -1) {
+				scheduleFile.schedules.splice(scheduleIndex, 1);
+				if (saveSchedules(scheduleFile)) {
 					return json({ message: "Schedule deleted successfully" });
 				}
 			}

@@ -1,22 +1,39 @@
 {
-  "32": {
-    "label": "Green",
-    "on_time": "21:21",
-    "off_time": "22:00"
-  },
-  "36": {
-    "label": "Yellow",
-    "on_time": "23:45",
-    "off_time": "01:01"
-  },
-  "38": {
-    "label": "Red",
-    "on_time": "23:23",
-    "off_time": "15:55"
-  },
-  "40": {
-    "label": "Blue",
-    "on_time": "08:45",
-    "off_time": "07:45"
-  }
+	"schedules": [
+		{
+			"id": "1",
+			"pin": "32",
+			"label": "Green",
+			"on_time": "08:00",
+			"off_time": "12:00"
+		},
+		{
+			"id": "2",
+			"pin": "36",
+			"label": "Yellow",
+			"on_time": "18:00",
+			"off_time": "22:00"
+		},
+		{
+			"id": "3",
+			"pin": "38",
+			"label": "Red",
+			"on_time": "23:45",
+			"off_time": "01:01"
+		},
+		{
+			"id": "cd5aef9a97d81517295bff1f7172bdef",
+			"pin": "40",
+			"label": "Blue",
+			"on_time": "20:42",
+			"off_time": "20:43"
+		},
+		{
+			"id": "e4e810295647991bcd5b63be68a15950",
+			"pin": "40",
+			"label": "Blue",
+			"on_time": "20:44",
+			"off_time": "20:45"
+		}
+	]
 }

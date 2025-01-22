@@ -25,18 +25,19 @@ def load_schedules():
     try:
         if os.path.exists(SCHEDULE_FILE):
             with open(SCHEDULE_FILE, "r") as f:
-                return json.load(f)
-        return {}
+                data = json.load(f)
+                return data.get("schedules", [])
+        return []
     except Exception as e:
         print(f"Error loading schedules: {e}")
-        return {}
+        return []
 
 
 def save_schedules(schedules):
     """Save schedules to JSON file"""
     try:
         with open(SCHEDULE_FILE, "w") as f:
-            json.dump(schedules, f, indent=2)
+            json.dump({"schedules": schedules}, f, indent=2)
     except Exception as e:
         print(f"Error saving schedules: {e}")
 
@@ -56,23 +57,20 @@ def control_pin(pin, state):
 def add_schedule():
     data = request.get_json()
 
-    if not all(k in data for k in ["pin", "on_time", "off_time"]):
+    if not all(k in data for k in ["pin", "label", "on_time", "off_time"]):
         return jsonify({"error": "Missing required fields"}), 400
 
     pin = int(data["pin"])
-    on_time = data["on_time"]  # Format: "HH:MM"
-    off_time = data["off_time"]  # Format: "HH:MM"
+    label = data["label"]
+    on_time = data["on_time"]
+    off_time = data["off_time"]
 
     # Setup the pin
     setup_pin(pin)
 
     # Create schedule IDs
-    on_job_id = f"pin_{pin}_on"
-    off_job_id = f"pin_{pin}_off"
-
-    # Remove existing jobs for this pin
-    scheduler.remove_job(on_job_id, ignore_if_not_exists=True)
-    scheduler.remove_job(off_job_id, ignore_if_not_exists=True)
+    on_job_id = f"pin_{pin}_{on_time}_on"
+    off_job_id = f"pin_{pin}_{off_time}_off"
 
     # Parse HH:MM into hour and minute
     on_hour, on_minute = on_time.split(":")
@@ -95,38 +93,44 @@ def add_schedule():
 
     # Save schedule to file
     schedules = load_schedules()
-    schedules[str(pin)] = {"on_time": on_time, "off_time": off_time}
+    new_schedule = {
+        "id": data.get("id", f"{pin}_{on_time}_{off_time}"),
+        "pin": str(pin),
+        "label": label,
+        "on_time": on_time,
+        "off_time": off_time,
+    }
+    schedules.append(new_schedule)
     save_schedules(schedules)
 
-    return jsonify(
-        {
-            "message": "Schedule added successfully",
-            "pin": pin,
-            "on_time": on_time,
-            "off_time": off_time,
-        }
-    )
+    return jsonify({"message": "Schedule added successfully", "schedule": new_schedule})
 
 
-@app.route("/schedule/<int:pin>", methods=["DELETE"])
-def remove_schedule(pin):
-    # Remove jobs from scheduler
-    scheduler.remove_job(f"pin_{pin}_on", ignore_if_not_exists=True)
-    scheduler.remove_job(f"pin_{pin}_off", ignore_if_not_exists=True)
-
-    # Remove from saved schedules
+@app.route("/schedule/<schedule_id>", methods=["DELETE"])
+def remove_schedule(schedule_id):
     schedules = load_schedules()
-    if str(pin) in schedules:
-        del schedules[str(pin)]
+    schedule = next((s for s in schedules if s["id"] == schedule_id), None)
+
+    if schedule:
+        pin = int(schedule["pin"])
+        on_time = schedule["on_time"]
+        off_time = schedule["off_time"]
+
+        # Remove jobs from scheduler
+        scheduler.remove_job(f"pin_{pin}_{on_time}_on", ignore_if_not_exists=True)
+        scheduler.remove_job(f"pin_{pin}_{off_time}_off", ignore_if_not_exists=True)
+
+        # Remove from saved schedules
+        schedules = [s for s in schedules if s["id"] != schedule_id]
         save_schedules(schedules)
-        return jsonify({"message": f"Schedule for pin {pin} removed"})
+        return jsonify({"message": f"Schedule {schedule_id} removed"})
 
     return jsonify({"error": "Schedule not found"}), 404
 
 
 @app.route("/schedules", methods=["GET"])
 def get_schedules():
-    return jsonify(load_schedules())
+    return jsonify({"schedules": load_schedules()})
 
 
 @app.route("/pin/<int:pin>", methods=["POST"])
@@ -148,29 +152,31 @@ def manual_control(pin):
     )
 
 
-# Load saved schedules on startup
+# Initialize schedules on startup
 with app.app_context():
     schedules = load_schedules()
-    for pin, schedule in schedules.items():
-        pin = int(pin)
+    for schedule in schedules:
+        pin = int(schedule["pin"])
         setup_pin(pin)
 
         # Parse HH:MM into hour and minute
-        on_hour, on_minute = schedule["on_time"].split(":")
-        off_hour, off_minute = schedule["off_time"].split(":")
+        on_time = schedule["on_time"]
+        off_time = schedule["off_time"]
+        on_hour, on_minute = on_time.split(":")
+        off_hour, off_minute = off_time.split(":")
 
         # Recreate the schedules
         scheduler.add_job(
             control_pin,
             CronTrigger.from_crontab(f"{on_minute} {on_hour} * * *"),
-            id=f"pin_{pin}_on",
+            id=f"pin_{pin}_{on_time}_on",
             args=[pin, True],
         )
 
         scheduler.add_job(
             control_pin,
             CronTrigger.from_crontab(f"{off_minute} {off_hour} * * *"),
-            id=f"pin_{pin}_off",
+            id=f"pin_{pin}_{off_time}_off",
             args=[pin, False],
         )
 

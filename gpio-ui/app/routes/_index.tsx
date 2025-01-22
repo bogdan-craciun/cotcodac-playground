@@ -17,26 +17,28 @@ import { useToast } from "~/hooks/use-toast";
 import { Toaster } from "~/components/ui/toaster";
 
 interface Schedule {
+	id: string;
+	pin: string;
 	label: string;
 	on_time: string;
 	off_time: string;
 }
 
-interface Schedules {
-	[pin: string]: Schedule;
+interface ScheduleFile {
+	schedules: Schedule[];
 }
 
 export const loader: LoaderFunction = async () => {
 	const response = await fetch("http://localhost:5173/api/schedules");
-	const schedules = await response.json();
-	return json({ schedules, ENV: { API_ROOT: process.env.API_ROOT } });
+	const scheduleFile = await response.json();
+	return json({ scheduleFile, ENV: { API_ROOT: process.env.API_ROOT } });
 };
 
 export default function Index() {
-	const { schedules: initialSchedules, ENV } = useLoaderData<typeof loader>();
+	const { scheduleFile: initialScheduleFile, ENV } = useLoaderData<typeof loader>();
 	const { toast } = useToast();
 	const fetcher = useFetcher();
-	const [schedules, setSchedules] = useState<Schedules>(initialSchedules);
+	const [schedules, setSchedules] = useState<Schedule[]>(initialScheduleFile.schedules);
 	const [newSchedule, setNewSchedule] = useState({
 		pin: "",
 		label: "",
@@ -49,8 +51,8 @@ export default function Index() {
 			if (!fetcher.data.error) {
 				fetch("/api/schedules")
 					.then(response => response.json())
-					.then(newSchedules => {
-						setSchedules(newSchedules);
+					.then((data: ScheduleFile) => {
+						setSchedules(data.schedules);
 						toast({
 							title: "Success",
 							description: fetcher.data.message,
@@ -83,10 +85,10 @@ export default function Index() {
 		setNewSchedule({ pin: "", label: "", on_time: "", off_time: "" });
 	};
 
-	const handleDelete = (pin: string) => {
+	const handleDelete = (id: string) => {
 		const formData = new FormData();
 		formData.append("intent", "delete");
-		formData.append("pin", pin);
+		formData.append("id", id);
 
 		fetcher.submit(formData, {
 			method: "post",
@@ -146,7 +148,7 @@ export default function Index() {
 									<Input
 										id="label"
 										type="text"
-										placeholder="e.g. Living Room Light"
+										placeholder="e.g. Relay 1"
 										value={newSchedule.label}
 										onChange={e => setNewSchedule(prev => ({ ...prev, label: e.target.value }))}
 										required
@@ -194,9 +196,9 @@ export default function Index() {
 								</TableRow>
 							</TableHeader>
 							<TableBody>
-								{Object.entries(schedules).map(([pin, schedule]) => (
-									<TableRow key={pin}>
-										<TableCell>{pin}</TableCell>
+								{schedules.map(schedule => (
+									<TableRow key={schedule.id}>
+										<TableCell>{schedule.pin}</TableCell>
 										<TableCell>{schedule.label}</TableCell>
 										<TableCell>{schedule.on_time}</TableCell>
 										<TableCell>{schedule.off_time}</TableCell>
@@ -205,18 +207,22 @@ export default function Index() {
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={() => handleManualControl(pin, true)}
+													onClick={() => handleManualControl(schedule.pin, true)}
 												>
 													Turn On
 												</Button>
 												<Button
 													variant="outline"
 													size="sm"
-													onClick={() => handleManualControl(pin, false)}
+													onClick={() => handleManualControl(schedule.pin, false)}
 												>
 													Turn Off
 												</Button>
-												<Button variant="destructive" size="sm" onClick={() => handleDelete(pin)}>
+												<Button
+													variant="destructive"
+													size="sm"
+													onClick={() => handleDelete(schedule.id)}
+												>
 													Delete
 												</Button>
 											</div>
