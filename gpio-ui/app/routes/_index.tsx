@@ -29,13 +29,15 @@ interface ScheduleFile {
 }
 
 export const loader: LoaderFunction = async () => {
-	const response = await fetch("http://localhost:5173/api/schedules");
+	console.log("the env in loader", process.env);
+	const response = await fetch(`${process.env.UI_ROOT}/api/schedules`);
 	const scheduleFile = await response.json();
 	return json({ scheduleFile, ENV: { API_ROOT: process.env.API_ROOT } });
 };
 
 export default function Index() {
 	const { scheduleFile: initialScheduleFile, ENV } = useLoaderData<typeof loader>();
+	console.log("the env", ENV);
 	const { toast } = useToast();
 	const fetcher = useFetcher();
 	const [schedules, setSchedules] = useState<Schedule[]>(initialScheduleFile.schedules);

@@ -1,5 +1,15 @@
 # cotcodac-playground
 
+Increase swap size to 1GB at least:
+
+sudo nano /etc/dphys-swapfile
+change CONF_SWAPSIZE to 1024
+sudo dphys-swapfile setup
+sudo dphys-swapfile swapon
+free -h
+
+Download Node: https://unofficial-builds.nodejs.org/download/release/v20.18.2/node-v20.18.2-linux-armv6l.tar.gz
+
 ```
 sudo apt-get install i2c-tools git python3-pip
 
